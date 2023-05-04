@@ -1,7 +1,7 @@
 import numpy as np
 from math import atan2, pi, sin, cos, sqrt
 from numba import jit
-from time import time
+from time import time, sleep
 
 
 class Encoder:
@@ -11,7 +11,7 @@ class Encoder:
         self.data = [width, height]
 
     def clear(self):
-        del self.data[2:]
+        self.data = [self.width, self.height]
 
     def image(
         self, name: str, x: int, y: int, width: int, height: int, rotation: int = 0
@@ -57,14 +57,13 @@ class Encoder:
 
 
 class Timer:
-    def __init__(self, framerate, socketio):
+    def __init__(self, framerate):
         self.wait = 1 / framerate
-        self.socketio = socketio
         self.start = time()
 
     def tick(self):
         sleep_time = self.wait - ((time() - self.start) % self.wait)
-        self.socketio.sleep(sleep_time)
+        sleep(sleep_time)
 
 
 @jit(nopython=True)

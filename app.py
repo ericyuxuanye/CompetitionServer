@@ -9,7 +9,7 @@ from flask_socketio import SocketIO
 
 from game import game_process
 
-UPLOAD_FOLDER = os.path.expanduser("~/flask_files")
+DIRNAME = os.path.dirname(__file__)
 ALLOWED_EXTENSIONS = {"zip"}
 
 app = Flask(__name__)
@@ -46,7 +46,7 @@ def upload():
         return "Empty file", 400
     if file and allowed_file(file.filename):
         file.save(
-            "flask_files/model.zip"
+            os.path.join(DIRNAME, "flask_files/model.zip")
         )
         file_changed.value = 1
         # Return success message

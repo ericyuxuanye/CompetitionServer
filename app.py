@@ -2,21 +2,20 @@ import eventlet
 
 eventlet.monkey_patch()
 import os
-from multiprocessing import Process
-import redis
+from multiprocessing import Process, Value
 
 from flask import Flask, request, send_file, send_from_directory
 from flask_socketio import SocketIO
 
 from game import game_process
 
-UPLOAD_FOLDER = "~/flask_files"
-ALLOWED_EXTENSIONS = {"pt"}
+UPLOAD_FOLDER = os.path.expanduser("~/flask_files")
+ALLOWED_EXTENSIONS = {"zip"}
 
 app = Flask(__name__)
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 # app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, message_queue="redis://", channel="socketio")
+file_changed = Value('i', 0)
 
 
 @app.route("/")
@@ -47,13 +46,15 @@ def upload():
         return "Empty file", 400
     if file and allowed_file(file.filename):
         file.save(
-            os.path.join(os.path.expanduser(app.config["UPLOAD_FOLDER"]), "model.pt")
+            os.path.expanduser("~/flask_files/model.zip")
         )
-    # Return success message
-    return "", 204
+        file_changed.value = 1
+        # Return success message
+        return "", 204
+    return "File extension not allowed", 400
 
 
 if __name__ == "__main__":
-    process = Process(target=game_process)
+    process = Process(target=game_process, args=(file_changed,))
     process.start()
     socketio.run(app, host="0.0.0.0", port=8000, debug=False)

@@ -1,5 +1,4 @@
-from multiprocessing import Process
-from typing import Any, Callable
+import os
 from flask_socketio import SocketIO
 
 from stable_baselines3 import PPO
@@ -22,10 +21,10 @@ action_to_keys = [
 WIDTH = 1024
 HEIGHT = 768
 
-def game_process():
+def game_process(file_changed):
     socketio = SocketIO(message_queue="redis://", channel="socketio")
     encoder = Encoder(WIDTH, HEIGHT)
-    model = PPO.load("ppo_racer")
+    model = PPO.load(os.path.expanduser("~/flask_files/model.zip"))
     car = Car(1.5, 1, 7)
     timer = Timer(60)
     while True:
@@ -37,4 +36,9 @@ def game_process():
         )
         socketio.emit("frame", {"data": encoder.data})
         encoder.clear()
+        if file_changed.value == 1:
+            # load model again
+            model = PPO.load(os.path.expanduser("~/flask_files/model.zip"))
+            print("Model successfully changed")
+            file_changed.value = 0
         timer.tick()

@@ -1,127 +1,143 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html>
+  <head>
+    <meta charset="utf-8" />
 
-<head>
-  <meta charset="utf-8">
+    <title>Game Livestream</title>
+  </head>
 
-  <title>Game Livestream</title>
+  <body>
+    <h1>Livestream Test</h1>
+    <canvas id="canvas" width="800" height="500"></canvas>
+    <h2>Upload your model here</h2>
+    <form action="/action_page.php">
+      <input id="fileupload" type="file" name="fileupload" />
+      <button id="upload-button" onclick="uploadFile()">Upload</button>
+    </form>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+      integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      const socket = io();
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const imageCache = {};
+      const loadingCache = new Set();
+      const queue = [];
+      var firstConnect = true;
+      const wait = 1000 / 60;
+      const start = Date.now();
+      var then = start;
 
-</head>
+      if (window.devicePixelRatio > 1) {
+        var canvasWidth = canvas.width;
+        var canvasHeight = canvas.height;
 
-<body>
-  <h1>Livestream Test</h1>
-  <canvas id="canvas" width='800' height='500'></canvas>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
-  <script>
-    const socket = io();
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
-    const imageCache = {};
-    const loadingCache = new Set();
-    const queue = [];
-    var firstConnect = true;
-    const wait = 1000 / 60;
-    const start = Date.now();
-    var then = start;
+        canvas.width = canvasWidth * window.devicePixelRatio;
+        canvas.height = canvasHeight * window.devicePixelRatio;
+        canvas.style.width = canvasWidth + "px";
+        canvas.style.height = canvasHeight + "px";
 
-    if (window.devicePixelRatio > 1) {
-      var canvasWidth = canvas.width;
-      var canvasHeight = canvas.height;
-
-      canvas.width = canvasWidth * window.devicePixelRatio;
-      canvas.height = canvasHeight * window.devicePixelRatio;
-      canvas.style.width = canvasWidth + "px";
-      canvas.style.height = canvasHeight + "px";
-
-      //ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-    }
-
-    socket.on('frame', function(response) {
-      queue.push(response.data);
-      if (queue.length >= 180) {
-        queue.splice(0, queue.length - 60);
+        //ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
       }
-    });
 
-    socket.on('connect', function() {
-      if (firstConnect) {
-        draw();
-        firstConnect = false;
-      }
-    });
-
-    function draw() {
-      requestAnimationFrame(draw);
-      const now = Date.now();
-      const elapsed = now - then;
-      if (elapsed < wait) {
-        return;
-      }
-      then = now - (elapsed % wait);
-      if (queue.length == 0) {
-        // to skip frames for whatever reason
-        return;
-      }
-      if (queue.length >= 120) {
-        queue.splice(0, 1);
-      }
-      const data = queue.shift();
-      const width = data[0];
-      const height = data[1];
-      const width_multiple = canvas.width / width;
-      const height_multiple = canvas.height / height;
-      ctx.save();
-      ctx.scale(width_multiple, height_multiple);
-      for (let i = 2; i < data.length; i++) {
-        const item = data[i];
-        switch (item.type) {
-          case 'image':
-            handleImage(item);
-            break;
-          case 'background':
-            ctx.fillStyle = item.color;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            break;
+      socket.on("frame", function (response) {
+        queue.push(response.data);
+        if (queue.length >= 180) {
+          queue.splice(0, queue.length - 60);
         }
-      }
-      ctx.restore();
-    }
+      });
 
-    function handleImage(item) {
-      const x = item.x;
-      const y = item.y;
-      const width = item.width;
-      const height = item.height;
-      const dx = x - (width / 2);
-      const dy = y - (height / 2);
-      const image = imageCache[item.name];
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(-item.rotation * Math.PI / 180);
-      ctx.translate(-width / 2, -height / 2);
-      // ctx.translate(-x, -y);
-      if (!image) {
-        if (!loadingCache.has(item.name)) {
-          // load image
-          loadImage(item.name);
+      socket.on("connect", function () {
+        if (firstConnect) {
+          draw();
+          firstConnect = false;
         }
-        // draw rectangle in place of image
-        ctx.fillStyle = "gray";
-        ctx.fillRect(0, 0, width, height);
-      } else {
-        ctx.drawImage(image, 0, 0, width, height);
+      });
+
+      function draw() {
+        requestAnimationFrame(draw);
+        const now = Date.now();
+        const elapsed = now - then;
+        if (elapsed < wait) {
+          return;
+        }
+        then = now - (elapsed % wait);
+        if (queue.length == 0) {
+          // to skip frames for whatever reason
+          return;
+        }
+        if (queue.length >= 120) {
+          queue.splice(0, 1);
+        }
+        const data = queue.shift();
+        const width = data[0];
+        const height = data[1];
+        const width_multiple = canvas.width / width;
+        const height_multiple = canvas.height / height;
+        ctx.save();
+        ctx.scale(width_multiple, height_multiple);
+        for (let i = 2; i < data.length; i++) {
+          const item = data[i];
+          switch (item.type) {
+            case "image":
+              handleImage(item);
+              break;
+            case "background":
+              ctx.fillStyle = item.color;
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+              break;
+          }
+        }
+        ctx.restore();
       }
-      ctx.restore();
-    }
 
-    async function loadImage(name) {
-      loadingCache.add(name);
-      const response = await fetch("/images/" + name);
-      const blob = await response.blob();
-      const bitmap = await createImageBitmap(blob);
-      imageCache[name] = bitmap;
-    }
-  </script>
-</body>
+      function handleImage(item) {
+        const x = item.x;
+        const y = item.y;
+        const width = item.width;
+        const height = item.height;
+        const dx = x - width / 2;
+        const dy = y - height / 2;
+        const image = imageCache[item.name];
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate((-item.rotation * Math.PI) / 180);
+        ctx.translate(-width / 2, -height / 2);
+        // ctx.translate(-x, -y);
+        if (!image) {
+          if (!loadingCache.has(item.name)) {
+            // load image
+            loadImage(item.name);
+          }
+          // draw rectangle in place of image
+          ctx.fillStyle = "gray";
+          ctx.fillRect(0, 0, width, height);
+        } else {
+          ctx.drawImage(image, 0, 0, width, height);
+        }
+        ctx.restore();
+      }
 
+      async function loadImage(name) {
+        loadingCache.add(name);
+        const response = await fetch("/images/" + name);
+        const blob = await response.blob();
+        const bitmap = await createImageBitmap(blob);
+        imageCache[name] = bitmap;
+      }
+      // file upload
+      async function uploadFile() {
+        let formData = new FormData();
+        formData.append("file", fileupload.files[0]);
+        await fetch("/upload", {
+          method: "POST",
+          body: formData,
+        });
+        alert("The file has been uploaded successfully.");
+      }
+    </script>
+  </body>
 </html>

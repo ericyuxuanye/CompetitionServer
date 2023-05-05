@@ -24,7 +24,7 @@ HEIGHT = 768
 def game_process(file_changed):
     socketio = SocketIO(message_queue="redis://", channel="socketio")
     encoder = Encoder(WIDTH, HEIGHT)
-    model = PPO.load(os.path.expanduser("~/flask_files/model"))
+    model = PPO.load("flask_files/model")
     car = Car(1.5, 1, 7)
     timer = Timer(60)
     while True:
@@ -38,7 +38,7 @@ def game_process(file_changed):
         encoder.clear()
         if file_changed.value == 1:
             # load model again
-            model = PPO.load(os.path.expanduser("~/flask_files/model"))
+            model = PPO.load("flask_files/model")
             print("Model successfully changed")
             file_changed.value = 0
         timer.tick()

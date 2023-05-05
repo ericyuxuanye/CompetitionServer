@@ -46,7 +46,7 @@ def upload():
         return "Empty file", 400
     if file and allowed_file(file.filename):
         file.save(
-            os.path.expanduser("~/flask_files/model.zip")
+            "flask_files/model.zip"
         )
         file_changed.value = 1
         # Return success message

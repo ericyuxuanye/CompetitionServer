@@ -30,7 +30,7 @@ def send_image(path):
 
 @socketio.on("connect")
 def success_message():
-    print("Connection Successful")
+    print("Socket established from", request.remote_addr)
 
 
 def allowed_file(filename):

@@ -51,7 +51,8 @@ def upload():
         file_changed.value = 1
         # Return success message
         return "", 204
-    return "File extension not allowed", 400
+    # Unsupported media type
+    return "File extension not allowed", 415
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 import os
-from flask_socketio import SocketIO
+from multiprocessing import Event
 
+from flask_socketio import SocketIO
 from stable_baselines3 import PPO
 
 from sprites import Car
@@ -21,6 +22,7 @@ action_to_keys = [
 WIDTH = 1024
 HEIGHT = 768
 
+
 def game_process(file_changed):
     dirname = os.path.dirname(__file__)
     filename = os.path.join(dirname, "flask_files/model")
@@ -38,9 +40,9 @@ def game_process(file_changed):
         )
         socketio.emit("frame", {"data": encoder.data})
         encoder.clear()
-        if file_changed.value == 1:
+        if file_changed.is_set():
+            file_changed.clear()
             # load model again
             model = PPO.load(filename)
             print("Model successfully changed")
-            file_changed.value = 0
         timer.tick()

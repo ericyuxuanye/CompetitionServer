@@ -2,7 +2,7 @@ import eventlet
 
 eventlet.monkey_patch()
 import os
-from multiprocessing import Process, Value
+from multiprocessing import Process, Event
 
 from flask import Flask, request, send_file, send_from_directory
 from flask_socketio import SocketIO
@@ -15,7 +15,7 @@ ALLOWED_EXTENSIONS = {"zip"}
 app = Flask(__name__)
 # app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, message_queue="redis://", channel="socketio")
-file_changed = Value('i', 0)
+file_changed = Event()
 
 
 @app.route("/")
@@ -48,7 +48,7 @@ def upload():
         file.save(
             os.path.join(DIRNAME, "flask_files/model.zip")
         )
-        file_changed.value = 1
+        file_changed.set()
         # Return success message
         return "", 204
     # Unsupported media type

@@ -2,7 +2,7 @@ import eventlet
 
 eventlet.monkey_patch()
 import os
-from multiprocessing import Process, Event
+from multiprocessing import Event, Process
 
 from flask import Flask, request, send_file, send_from_directory
 from flask_socketio import SocketIO
@@ -45,9 +45,7 @@ def upload():
     if file.filename == "":
         return "Empty file", 400
     if file and allowed_file(file.filename):
-        file.save(
-            os.path.join(DIRNAME, "flask_files/model.zip")
-        )
+        file.save(os.path.join(DIRNAME, "flask_files/model.zip"))
         file_changed.set()
         # Return success message
         return "", 204
@@ -58,4 +56,4 @@ def upload():
 if __name__ == "__main__":
     process = Process(target=game_process, args=(file_changed,))
     process.start()
-    socketio.run(app, host="0.0.0.0", port=8000, debug=False)
+    socketio.run(app, host="0.0.0.0", port=80, debug=False)

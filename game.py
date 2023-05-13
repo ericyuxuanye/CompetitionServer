@@ -1,10 +1,8 @@
 import os
-from multiprocessing import Event
-
 from flask_socketio import SocketIO
 from stable_baselines3 import PPO
 
-from sprites import Car
+from car import Car
 from utils import Encoder, Timer
 
 action_to_keys = [
@@ -41,6 +39,8 @@ def game_process(file_changed):
         socketio.emit("frame", {"data": encoder.data})
         encoder.clear()
         if file_changed.is_set():
+            # This multiprocessing event would be set
+            # when the file gets changed
             file_changed.clear()
             # load model again
             model = PPO.load(filename)
